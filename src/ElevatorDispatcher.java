@@ -16,7 +16,7 @@ public class ElevatorDispatcher implements Runnable {
     public void submitRequest(PassengerRequest request) {
         try {
             requestQueue.put(request);
-            System.out.println("Dispatcher: New request received - " + request);
+            Logger.logRequest(request);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
@@ -24,7 +24,7 @@ public class ElevatorDispatcher implements Runnable {
 
     @Override
     public void run() {
-        System.out.println("Dispatcher started");
+        Logger.logSystemEvent("Dispatcher started");
 
         while (running || !requestQueue.isEmpty()) {
             try {
@@ -36,18 +36,18 @@ public class ElevatorDispatcher implements Runnable {
             }
         }
 
-        System.out.println("Dispatcher stopped");
+        Logger.logSystemEvent("Dispatcher stopped");
     }
 
     private void processRequest(PassengerRequest request) {
         Elevator bestElevator = findBestElevator(request);
 
         if (bestElevator != null) {
-            System.out.println("Dispatcher: Assigned Elevator " + bestElevator.getId() + " to request " + request);
+            Logger.logElevatorAssignment(bestElevator.getId(), request);
             bestElevator.addTarget(request.getFromFloor());
             bestElevator.addTarget(request.getToFloor());
         } else {
-            System.out.println("Dispatcher: No available elevator found for request " + request);
+            Logger.logSystemEvent("No available elevator found for request " + request);
         }
     }
 
