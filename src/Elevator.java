@@ -5,17 +5,21 @@ import java.util.concurrent.locks.ReentrantLock;
 public class Elevator implements Runnable {
     private final int id;
     private final int maxFloor;
+    private final int maxCapacity;
     private int currentFloor;
+    private int currentPassengers;
     private Direction direction;
     private ElevatorStatus status;
     private final Set<Integer> targetFloors;
     private final ReentrantLock lock;
     private volatile boolean running;
 
-    public Elevator(int id, int maxFloor) {
+    public Elevator(int id, int maxFloor, int maxCapacity) {
         this.id = id;
         this.maxFloor = maxFloor;
+        this.maxCapacity = maxCapacity;
         this.currentFloor = 1;
+        this.currentPassengers = 0;
         this.direction = Direction.IDLE;
         this.status = ElevatorStatus.STOPPED;
         this.targetFloors = new TreeSet<>();
@@ -54,6 +58,28 @@ public class Elevator implements Runnable {
         }
     }
 
+    public int getCurrentPassengers() {
+        lock.lock();
+        try {
+            return currentPassengers;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public int getMaxCapacity() {
+        return maxCapacity;
+    }
+
+    public boolean hasCapacity() {
+        lock.lock();
+        try {
+            return currentPassengers < maxCapacity;
+        } finally {
+            lock.unlock();
+        }
+    }
+
     public void addTarget(int floor) {
         lock.lock();
         try {
@@ -68,7 +94,7 @@ public class Elevator implements Runnable {
 
     @Override
     public void run() {
-        Logger.logSystemEvent("Elevator " + id + " started");
+        Logger.logSystemEvent("Elevator " + id + " started (capacity: " + maxCapacity + " passengers)");
 
         while (running) {
             try {
@@ -154,6 +180,9 @@ public class Elevator implements Runnable {
 
         status = ElevatorStatus.DOORS_OPEN;
         Logger.logDoorsOpen(id, floor);
+
+        simulatePassengerExchange(floor);
+
         Thread.sleep(2000);
 
         targetFloors.remove(floor);
@@ -161,6 +190,25 @@ public class Elevator implements Runnable {
         Logger.logDoorsClose(id, floor);
         Thread.sleep(1000);
         status = ElevatorStatus.STOPPED;
+    }
+
+    private void simulatePassengerExchange(int floor) {
+        int passengersExiting = Math.min(currentPassengers, 2);
+        currentPassengers -= passengersExiting;
+
+        if (passengersExiting > 0) {
+            Logger.logSystemEvent("Elevator " + id + " at floor " + floor + ": " + passengersExiting + " passenger(s) exited");
+        }
+
+        int availableSpace = maxCapacity - currentPassengers;
+        int passengersEntering = Math.min(availableSpace, 2);
+        currentPassengers += passengersEntering;
+
+        if (passengersEntering > 0) {
+            Logger.logSystemEvent("Elevator " + id + " at floor " + floor + ": " + passengersEntering + " passenger(s) entered");
+        }
+
+        Logger.logSystemEvent("Elevator " + id + " capacity: " + currentPassengers + "/" + maxCapacity);
     }
 
     public void shutdown() {

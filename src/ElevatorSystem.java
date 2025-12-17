@@ -5,19 +5,27 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 public class ElevatorSystem {
+    private static final int DEFAULT_CAPACITY = 8;
+
     private final List<Elevator> elevators;
     private final ElevatorDispatcher dispatcher;
     private final ExecutorService executorService;
     private final int numberOfElevators;
     private final int numberOfFloors;
+    private final int elevatorCapacity;
 
     public ElevatorSystem(int numberOfElevators, int numberOfFloors) {
+        this(numberOfElevators, numberOfFloors, DEFAULT_CAPACITY);
+    }
+
+    public ElevatorSystem(int numberOfElevators, int numberOfFloors, int elevatorCapacity) {
         this.numberOfElevators = numberOfElevators;
         this.numberOfFloors = numberOfFloors;
+        this.elevatorCapacity = elevatorCapacity;
         this.elevators = new ArrayList<>();
 
         for (int i = 1; i <= numberOfElevators; i++) {
-            elevators.add(new Elevator(i, numberOfFloors));
+            elevators.add(new Elevator(i, numberOfFloors, elevatorCapacity));
         }
 
         this.dispatcher = new ElevatorDispatcher(elevators);
@@ -25,7 +33,7 @@ public class ElevatorSystem {
     }
 
     public void start() {
-        Logger.logSystemEvent("Starting Elevator System with " + numberOfElevators + " elevators and " + numberOfFloors + " floors");
+        Logger.logSystemEvent("Starting Elevator System with " + numberOfElevators + " elevators, " + numberOfFloors + " floors, capacity: " + elevatorCapacity);
 
         executorService.submit(dispatcher);
 
@@ -104,5 +112,9 @@ public class ElevatorSystem {
 
     public int getNumberOfFloors() {
         return numberOfFloors;
+    }
+
+    public int getElevatorCapacity() {
+        return elevatorCapacity;
     }
 }

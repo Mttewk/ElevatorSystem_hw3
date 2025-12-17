@@ -4,15 +4,16 @@ import java.util.Scanner;
 public class Main {
     private static final int NUMBER_OF_ELEVATORS = 3;
     private static final int NUMBER_OF_FLOORS = 10;
+    private static final int ELEVATOR_CAPACITY = 8;
 
     public static void main(String[] args) {
-        ElevatorSystem system = new ElevatorSystem(NUMBER_OF_ELEVATORS, NUMBER_OF_FLOORS);
+        ElevatorSystem system = new ElevatorSystem(NUMBER_OF_ELEVATORS, NUMBER_OF_FLOORS, ELEVATOR_CAPACITY);
         system.start();
 
         Scanner scanner = new Scanner(System.in);
         System.out.println("\n=== Elevator Control System ===");
         System.out.println("Commands:");
-        System.out.println("  request <from> <direction> <to> - Request elevator (direction: UP/DOWN)");
+        System.out.println("  <from> <to> - Request elevator (e.g., 3 7)");
         System.out.println("  auto <count> - Generate random requests");
         System.out.println("  status - Show elevator status");
         System.out.println("  quit - Exit system");
@@ -28,33 +29,16 @@ public class Main {
                 continue;
             }
 
-            switch (parts[0].toLowerCase()) {
-                case "request":
-                    if (parts.length == 4) {
-                        handleRequest(system, parts);
-                    } else {
-                        System.out.println("Usage: request <from> <direction> <to>");
-                    }
-                    break;
-
-                case "auto":
-                    if (parts.length == 2) {
-                        handleAutoRequests(system, parts[1]);
-                    } else {
-                        System.out.println("Usage: auto <count>");
-                    }
-                    break;
-
-                case "status":
-                    displayStatus(system);
-                    break;
-
-                case "quit":
-                    running = false;
-                    break;
-
-                default:
-                    System.out.println("Unknown command: " + parts[0]);
+            if (parts[0].equalsIgnoreCase("quit")) {
+                running = false;
+            } else if (parts[0].equalsIgnoreCase("status")) {
+                displayStatus(system);
+            } else if (parts[0].equalsIgnoreCase("auto") && parts.length == 2) {
+                handleAutoRequests(system, parts[1]);
+            } else if (parts.length == 2) {
+                handleSimpleRequest(system, parts);
+            } else {
+                System.out.println("Invalid command. Use: <from> <to>, auto <count>, status, or quit");
             }
         }
 
@@ -63,17 +47,20 @@ public class Main {
         System.out.println("System terminated");
     }
 
-    private static void handleRequest(ElevatorSystem system, String[] parts) {
+    private static void handleSimpleRequest(ElevatorSystem system, String[] parts) {
         try {
-            int fromFloor = Integer.parseInt(parts[1]);
-            Direction direction = Direction.valueOf(parts[2].toUpperCase());
-            int toFloor = Integer.parseInt(parts[3]);
+            int fromFloor = Integer.parseInt(parts[0]);
+            int toFloor = Integer.parseInt(parts[1]);
 
+            if (fromFloor == toFloor) {
+                System.out.println("Error: From and to floors cannot be the same");
+                return;
+            }
+
+            Direction direction = (toFloor > fromFloor) ? Direction.UP : Direction.DOWN;
             system.requestElevator(fromFloor, direction, toFloor);
         } catch (NumberFormatException e) {
-            System.out.println("Invalid floor number");
-        } catch (IllegalArgumentException e) {
-            System.out.println("Invalid direction. Use UP or DOWN");
+            System.out.println("Error: Invalid floor number");
         }
     }
 
@@ -103,18 +90,23 @@ public class Main {
 
             System.out.println("Generated " + count + " random requests");
         } catch (NumberFormatException e) {
-            System.out.println("Invalid count number");
+            System.out.println("Error: Invalid count number");
         }
     }
 
     private static void displayStatus(ElevatorSystem system) {
-        System.out.println("\n=== Elevator Status ===");
+        System.out.println("\n╔═══════════════════════════════════════════════════════════╗");
+        System.out.println("║                    ELEVATOR STATUS                        ║");
+        System.out.println("╠═══════════════════════════════════════════════════════════╣");
         for (Elevator elevator : system.getElevators()) {
-            System.out.println("Elevator " + elevator.getId() +
-                    ": Floor " + elevator.getCurrentFloor() +
-                    ", Direction: " + elevator.getDirection() +
-                    ", Status: " + elevator.getStatus());
+            System.out.printf("║ Elevator %-2d │ Floor: %-2d │ Direction: %-4s │ Status: %-11s │ Passengers: %d/%-2d ║%n",
+                    elevator.getId(),
+                    elevator.getCurrentFloor(),
+                    elevator.getDirection(),
+                    elevator.getStatus(),
+                    elevator.getCurrentPassengers(),
+                    elevator.getMaxCapacity());
         }
-        System.out.println("=======================\n");
+        System.out.println("╚═══════════════════════════════════════════════════════════╝\n");
     }
 }

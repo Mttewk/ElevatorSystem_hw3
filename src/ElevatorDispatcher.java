@@ -56,11 +56,26 @@ public class ElevatorDispatcher implements Runnable {
         int minDistance = Integer.MAX_VALUE;
 
         for (Elevator elevator : elevators) {
+            if (!elevator.hasCapacity()) {
+                continue;
+            }
+
             int distance = calculateDistance(elevator, request);
 
             if (distance < minDistance) {
                 minDistance = distance;
                 bestElevator = elevator;
+            }
+        }
+
+        if (bestElevator == null) {
+            for (Elevator elevator : elevators) {
+                int distance = calculateDistance(elevator, request);
+
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    bestElevator = elevator;
+                }
             }
         }
 
