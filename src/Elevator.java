@@ -59,7 +59,7 @@ public class Elevator implements Runnable {
         try {
             if (floor >= 1 && floor <= maxFloor) {
                 targetFloors.add(floor);
-                System.out.println("Elevator " + id + ": Added target floor " + floor);
+                Logger.logSystemEvent("Elevator " + id + " added target floor " + floor);
             }
         } finally {
             lock.unlock();
@@ -68,7 +68,7 @@ public class Elevator implements Runnable {
 
     @Override
     public void run() {
-        System.out.println("Elevator " + id + " started");
+        Logger.logSystemEvent("Elevator " + id + " started");
 
         while (running) {
             try {
@@ -80,15 +80,18 @@ public class Elevator implements Runnable {
             }
         }
 
-        System.out.println("Elevator " + id + " stopped");
+        Logger.logSystemEvent("Elevator " + id + " stopped");
     }
 
     private void processNextTarget() throws InterruptedException {
         lock.lock();
         try {
             if (targetFloors.isEmpty()) {
-                direction = Direction.IDLE;
-                status = ElevatorStatus.STOPPED;
+                if (direction != Direction.IDLE) {
+                    direction = Direction.IDLE;
+                    status = ElevatorStatus.STOPPED;
+                    Logger.logElevatorIdle(id, currentFloor);
+                }
                 return;
             }
 
@@ -133,12 +136,11 @@ public class Elevator implements Runnable {
         direction = (targetFloor > currentFloor) ? Direction.UP : Direction.DOWN;
         status = ElevatorStatus.MOVING;
 
-        System.out.println("Elevator " + id + ": Moving " + direction + " from floor " + currentFloor + " to floor " + targetFloor);
+        Logger.logElevatorMovement(id, direction, currentFloor, targetFloor);
 
         while (currentFloor != targetFloor) {
             Thread.sleep(1000);
             currentFloor += (direction == Direction.UP) ? 1 : -1;
-            System.out.println("Elevator " + id + ": Now at floor " + currentFloor);
 
             if (targetFloors.contains(currentFloor)) {
                 arriveAtFloor(currentFloor);
@@ -148,15 +150,15 @@ public class Elevator implements Runnable {
 
     private void arriveAtFloor(int floor) throws InterruptedException {
         status = ElevatorStatus.STOPPED;
-        System.out.println("Elevator " + id + ": Arrived at floor " + floor);
+        Logger.logElevatorArrival(id, floor);
 
         status = ElevatorStatus.DOORS_OPEN;
-        System.out.println("Elevator " + id + ": Doors opening at floor " + floor);
+        Logger.logDoorsOpen(id, floor);
         Thread.sleep(2000);
 
         targetFloors.remove(floor);
 
-        System.out.println("Elevator " + id + ": Doors closing at floor " + floor);
+        Logger.logDoorsClose(id, floor);
         Thread.sleep(1000);
         status = ElevatorStatus.STOPPED;
     }
