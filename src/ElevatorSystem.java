@@ -25,7 +25,7 @@ public class ElevatorSystem {
     }
 
     public void start() {
-        System.out.println("Starting Elevator System with " + numberOfElevators + " elevators and " + numberOfFloors + " floors");
+        Logger.logSystemEvent("Starting Elevator System with " + numberOfElevators + " elevators and " + numberOfFloors + " floors");
 
         executorService.submit(dispatcher);
 
@@ -33,17 +33,17 @@ public class ElevatorSystem {
             executorService.submit(elevator);
         }
 
-        System.out.println("Elevator System started successfully");
+        Logger.logSystemEvent("Elevator System started successfully");
     }
 
     public void requestElevator(int fromFloor, Direction direction, int toFloor) {
         if (!isValidFloor(fromFloor) || !isValidFloor(toFloor)) {
-            System.out.println("Invalid floor request: from=" + fromFloor + ", to=" + toFloor);
+            Logger.logSystemEvent("Invalid floor request: from=" + fromFloor + ", to=" + toFloor);
             return;
         }
 
         if (!isValidDirection(fromFloor, toFloor, direction)) {
-            System.out.println("Invalid direction for request: from=" + fromFloor + ", to=" + toFloor + ", direction=" + direction);
+            Logger.logSystemEvent("Invalid direction for request: from=" + fromFloor + ", to=" + toFloor + ", direction=" + direction);
             return;
         }
 
@@ -72,7 +72,7 @@ public class ElevatorSystem {
     }
 
     public void shutdown() {
-        System.out.println("Shutting down Elevator System...");
+        Logger.logSystemEvent("Shutting down Elevator System...");
 
         dispatcher.shutdown();
 
@@ -91,7 +91,7 @@ public class ElevatorSystem {
             Thread.currentThread().interrupt();
         }
 
-        System.out.println("Elevator System shut down successfully");
+        Logger.logSystemEvent("Elevator System shut down successfully");
     }
 
     public List<Elevator> getElevators() {
